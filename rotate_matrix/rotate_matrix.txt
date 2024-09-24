@@ -1,0 +1,22 @@
+Exercice: Rotate a Matrix by 90 Degrees
+
+In this exercise, you are required to implement a function that rotates a given rectangular matrix 90 degrees clockwise.
+
+The input matrix is represented as an array of characters, where each row contains a string of characters, and the rows are of equal length.
+
+The function should take as input an array of strings and return a new array, representing the rotated matrix.
+
+Function Signature:
+char **rotate_matrix_90dg(char **matrix);
+
+Example:
+Given the input matrix:
+ABC
+DEF
+GHI
+JKL
+After rotating 90 degrees clockwise, the output should be:
+JGDA
+KHEB
+LIFC
+
