@@ -6,7 +6,7 @@
 /*   By: lpaixao- <lpaixao-@student.42.rio>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 15:53:33 by lpaixao-          #+#    #+#             */
-/*   Updated: 2024/09/27 00:45:02 by lpaixao-         ###   ########.fr       */
+/*   Updated: 2024/09/27 10:45:54 by lpaixao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,6 @@
 # include <stdio.h>
 
 
-typedef struct  s_stream	t_stream;
 typedef struct  s_dots		t_dots;
 
 typedef struct	s_dots
@@ -36,25 +35,17 @@ typedef struct	s_dots
 	t_dots		*next;
 }	t_dots;
 
-typedef struct	s_stream
-{
-	t_dots			*closest_dots;
-	t_stream		*next;
-}	t_stream;
-
 //closest_dot
-t_stream			*closest_dot_stream(t_dots *dots);
-int					find_hypotenuse(int	x, int y);
-int					my_sqrt(int nb);
+t_dots				*closest_dot_stream(t_dots *dots);
+double				find_hypotenuse(int	x, int y);
 
 //linked list
 t_dots				*create_first_dot_node(char *c, t_dots *list);
 t_dots				*create_last_dot_node(char *c, t_dots *prev);
-void				print_list(t_stream *list);
-void				clear_dots_list(t_dots *node);
-void				clear_ret_list(t_stream *node);
-t_stream			*create_first_ret_node(t_dots *dot, t_stream *list);
-t_stream			*create_last_ret_node(t_dots *dot, t_stream *prev);
+t_dots				*create_first_ret_node(t_dots *dot, t_dots *list);
+t_dots				*create_last_ret_node(t_dots *dot, t_dots *prev);
+void				print_list(t_dots *list);
+void				clear_list(t_dots *node);
 
 //get next line
 char				*get_next_line(int fd);

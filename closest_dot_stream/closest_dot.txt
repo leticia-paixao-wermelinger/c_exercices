@@ -1,0 +1,29 @@
+
+Exercise: Find the Closest Points in an Euclidean Plane
+
+In this exercise, you are required to implement a function that processes a stream of points
+in a Euclidean plane and returns all the closest points (with the same distance)
+to the origin point (0,0).
+
+The input is represented as a linked list of points, where each point has two integer
+coordinates, x and y. The function calculates the Euclidean distance (hypotenuse) for
+each point from the origin and returns the points that share the shortest distance.
+
+Function Signature: t_dots *closest_dot_stream(t_dots *dots);
+
+Example:
+
+Given the following stream of points:
+(3,4)
+(5,0)
+(1,1)
+(0,5)
+
+The function should return:
+(3,4)
+(5,0)
+
+Big O Notation:
+The time complexity of the function is O(n), where n is the number of points in the input stream.
+This is because the function iterates over the entire list of points twice: once to find the
+closest hypotenuse and again to collect the points that match this distance.

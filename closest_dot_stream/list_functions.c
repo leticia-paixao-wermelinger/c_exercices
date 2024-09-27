@@ -32,26 +32,30 @@ t_dots	*create_last_dot_node(char *str, t_dots *prev)
 	return (new);
 }
 
-t_stream	*create_first_ret_node(t_dots *dot, t_stream *list)
+t_dots	*create_first_ret_node(t_dots *dot, t_dots *list)
 {
-	list = (t_stream *)malloc(sizeof(t_stream));
-	list->closest_dots = dot;
+	list = (t_dots *)malloc(sizeof(t_dots));
+	list->x = dot->x;
+	list->y = dot->y;
+	list->hypotenuse = dot->hypotenuse;
 	list->next = NULL;
 	return (list);
 }
 
-t_stream	*create_last_ret_node(t_dots *dot, t_stream *prev)
+t_dots	*create_last_ret_node(t_dots *dot, t_dots *prev)
 {
-	t_stream		*new;
+	t_dots	*new;
 
-	new = (t_stream *)malloc(sizeof(t_stream));
-	prev->closest_dots = dot;
+	new = (t_dots *)malloc(sizeof(t_dots));
+	new->x = dot->x;
+	new->y = dot->y;
+	new->hypotenuse = dot->hypotenuse;
 	prev->next = new;
 	new->next = NULL;
 	return (new);
 }
 
-void	clear_dots_list(t_dots *node)
+void	clear_list(t_dots *node)
 {
 	t_dots	*temp;
 
@@ -63,33 +67,15 @@ void	clear_dots_list(t_dots *node)
 	}
 }
 
-void	clear_ret_list(t_stream *node)
+void	print_list(t_dots *list)
 {
-	t_stream	*temp;
-
-	while (node)
-	{
-		temp = node;
-		node = node->next;
-		free(temp);
-	}
-}
-
-void	print_list(t_stream *list)
-{
-	t_stream	*temp;
-	t_dots		*dots;
-	int			i;
+	t_dots	*temp;
 
 	temp = list;
-	i = 0;
 	while (temp)
 	{
-		dots = temp->closest_dots;
-		printf("Ponto %i mais próximo\n", i);
-		printf("x: %i & ", dots->x);
-		printf("y: %i\n", dots->y);
-		i++;
+		printf("x: %i & ", temp->x);
+		printf("y: %i\n", temp->y);
 		temp = temp->next;
 	}
 }

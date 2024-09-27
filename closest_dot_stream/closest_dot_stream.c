@@ -3,23 +3,21 @@
 #include <stdio.h>
 
 /*
-The following function takes an array of t_dots structs as an argument and returns a linked list
-with each node pointing to the closest dots to (0,0).
-The 
+The following function takes a stream (saved as a list of t_dots structs) as an argument and returns another
+linked list with each node pointing to the closest dots to (0,0).
 */
 
-t_stream	*closest_dot_stream(t_dots *dots)
+t_dots	*closest_dot_stream(t_dots *dots)
 {
-	t_dots		*stream;
-	t_stream	*ret;
+	t_dots		*stream = dots;
+	t_dots		*ret = NULL;
+	t_dots		*temp;
 	int			count = 0;
-	int			closest_hypotenuse;
+	double		closest_hypotenuse;
 	int			flag_first = 0;
 
-	ret = NULL;
 	dots->hypotenuse = find_hypotenuse(dots->x, dots->y);
 	closest_hypotenuse = dots->hypotenuse;
-	stream = dots;
 	while (stream)
 	{
 		stream->hypotenuse = find_hypotenuse(stream->x, stream->y);
@@ -33,17 +31,18 @@ t_stream	*closest_dot_stream(t_dots *dots)
 		stream = stream->next;
 	}
 	stream = dots;
-	while (stream && count > 0)
+	while (stream && count >= 0)
 	{
 		if (stream->hypotenuse == closest_hypotenuse)
 		{
 			if (flag_first == 0)
 			{
 				ret = create_first_ret_node(stream, ret);
+				temp = ret;
 				flag_first = 1;
 			}
 			else
-				ret = create_last_ret_node(stream, ret);
+				temp = create_last_ret_node(stream, temp);
 			count--;
 		}
 		stream = stream->next;
@@ -51,7 +50,7 @@ t_stream	*closest_dot_stream(t_dots *dots)
 	return (ret);
 }
 
-int	find_hypotenuse(int x, int y)
+double	find_hypotenuse(int x, int y)
 {
 	double	hypotenuse = 0;
 
@@ -61,15 +60,13 @@ int	find_hypotenuse(int x, int y)
 
 int	main()
 {
-	int			fd;
+	char		*str = NULL;
 	char		*pathname = "./pathname.txt";
-	t_dots		*dots;
-	t_dots		*temp;
-	t_stream	*ret;
-	char		*str;
+	int			fd = open(pathname, O_RDONLY);
+	t_dots		*dots = NULL;
+	t_dots		*temp = NULL;
+	t_dots		*ret = NULL;
 
-	dots = NULL;;
-	fd = open(pathname, O_RDONLY);
 	if (fd < 0)
 		return (0);
 	str = get_next_line(fd);
@@ -87,6 +84,6 @@ int	main()
 	close(fd);
 	ret = closest_dot_stream(dots);
 	print_list(ret);
-	clear_ret_list(ret);
-	clear_dots_list(dots);
+	clear_list(ret);
+	clear_list(dots);
 }
