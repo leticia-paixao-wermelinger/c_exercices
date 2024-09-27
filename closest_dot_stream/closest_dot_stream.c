@@ -1,4 +1,6 @@
 #include "closest_dot.h"
+#include <math.h>
+#include <stdio.h>
 
 /*
 The following function takes an array of t_dots structs as an argument and returns a linked list
@@ -8,79 +10,83 @@ The
 
 t_stream	*closest_dot_stream(t_dots *dots)
 {
-	t_dots		*stream;		// Array de structs com os pontos mais próximos
-	t_dots		closest_mark;
+	t_dots		*stream;
 	t_stream	*ret;
-	int			count = 0;		// Contador de pontos mais próximos
-	int			i = 0;
+	int			count = 0;
 	int			closest_hypotenuse;
-	int			current_hypotenuse;
+	int			flag_first = 0;
 
-	closest_mark.x = 0;
-	closest_mark.y = 0;
-	closest_hypotenuse = find_hypotenuse(closest_mark.x, closest_mark.y);
+	ret = NULL;
+	dots->hypotenuse = find_hypotenuse(dots->x, dots->y);
+	closest_hypotenuse = dots->hypotenuse;
 	stream = dots;
-	while (stream[i])
+	while (stream)
 	{
-		current_hypotenuse = find_hypotenuse(dots->x, dots->x);
-		if (current_hypotenuse < closest_hypotenuse)
+		stream->hypotenuse = find_hypotenuse(stream->x, stream->y);
+		if (stream->hypotenuse < closest_hypotenuse)
 		{
-			closest_hypotenuse = current_hypotenuse; 
+			closest_hypotenuse = stream->hypotenuse; 
 			count = 0;
 		}
-		else if (current_hypotenuse == closest_hypotenuse)
+		else if (stream->hypotenuse == closest_hypotenuse)
 			count++;
-		i++;
+		stream = stream->next;
+	}
+	stream = dots;
+	while (stream && count > 0)
+	{
+		if (stream->hypotenuse == closest_hypotenuse)
+		{
+			if (flag_first == 0)
+			{
+				ret = create_first_ret_node(stream, ret);
+				flag_first = 1;
+			}
+			else
+				ret = create_last_ret_node(stream, ret);
+			count--;
+		}
+		stream = stream->next;
 	}
 	return (ret);
 }
 
 int	find_hypotenuse(int x, int y)
 {
-	int	hypotenuse = 0;
+	double	hypotenuse = 0;
 
-	hypotenuse = my_sqrt((x * x) + (y * y));
+	hypotenuse = sqrt((x * x) + (y * y));
 	return (hypotenuse);
-}
-
-int	my_sqrt(int nb)
-{
-	long int	x;
-
-	x = 0;
-	while (x * x <= nb)
-	{
-		if (x * x == nb)
-			return (x);
-		x++;
-	}
-	return (0);
 }
 
 int	main()
 {
 	int			fd;
-	char		*pathname = "./stream.txt";
-	t_dots		dots;
+	char		*pathname = "./pathname.txt";
+	t_dots		*dots;
+	t_dots		*temp;
 	t_stream	*ret;
 	char		*str;
-	int			i = 0;
 
+	dots = NULL;;
 	fd = open(pathname, O_RDONLY);
+	if (fd < 0)
+		return (0);
+	str = get_next_line(fd);
+	dots = create_first_dot_node(str, dots);
+	temp = dots;
+	free(str);
 	while (42)
 	{
 		str = get_next_line(fd);
-		if (!str)
+		if (str == NULL)
 			break ;
-		dots[i].x = atoi(str[0]);
-		dots[i].y = atoi(str[1]);
+		temp = create_last_dot_node(str, temp);
 		free(str);
-		i++;
 	}
-	str[i] = "\0";
 	close(fd);
 	ret = closest_dot_stream(dots);
-	free(dots);
 	print_list(ret);
-	free(list);
+	clear_ret_list(ret);
+	clear_dots_list(dots);
 }

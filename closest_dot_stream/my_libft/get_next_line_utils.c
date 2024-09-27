@@ -6,13 +6,13 @@
 /*   By: lpaixao- <lpaixao-@student.42.rio>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 15:53:19 by lpaixao-          #+#    #+#             */
-/*   Updated: 2024/09/26 21:41:12 by lpaixao-         ###   ########.fr       */
+/*   Updated: 2024/03/03 12:47:46 by lpaixao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "closest_dot.h"
+#include "libft.h"
 
-char	*ft_strchr(const char *s, int c)
+char	*gnl_ft_strchr(const char *s, int c)
 {
 	int		i;
 	char	ch;
@@ -36,7 +36,7 @@ char	*ft_strchr(const char *s, int c)
 	return (NULL);
 }
 
-int	my_strchr(const char *s, int c)
+int	gnl_my_strchr(const char *s, int c)
 {
 	int		i;
 	char	ch;
@@ -54,7 +54,7 @@ int	my_strchr(const char *s, int c)
 	return (i);
 }
 
-char	*ft_strjoin(char *s1, char *s2)
+char	*gnl_ft_strjoin(char *s1, char *s2)
 {
 	char	*string;
 
@@ -65,15 +65,16 @@ char	*ft_strjoin(char *s1, char *s2)
 		s1 = (char *)malloc(sizeof(char));
 		s1[0] = '\0';
 	}
-	string = (char *)malloc((ft_strlen(s1) + ft_strlen(s2) + 1) * sizeof(char));
+	string = (char *)my_calloc((gnl_ft_strlen(s1) \
+			+ gnl_ft_strlen(s2) + 1), sizeof(char));
 	if (!string)
 		return (NULL);
-	string = my_join(s1, s2, string);
+	string = gnl_my_join(s1, s2, string);
 	free(s1);
 	return (string);
 }
 
-char	*my_join(char *s1, char *s2, char *string)
+char	*gnl_my_join(char *s1, char *s2, char *string)
 {
 	int	i;
 	int	j;
@@ -95,7 +96,7 @@ char	*my_join(char *s1, char *s2, char *string)
 	return (string);
 }
 
-char	*ft_substr(char const *s, unsigned int start, size_t len)
+char	*gnl_ft_substr(char const *s, unsigned int start, size_t len)
 {
 	int		i;
 	char	*substr;
@@ -106,7 +107,7 @@ char	*ft_substr(char const *s, unsigned int start, size_t len)
 		return (NULL);
 	while ((size_t)i < len)
 	{
-		if (start >= ft_strlen(s))
+		if (start >= gnl_ft_strlen(s))
 			substr[i++] = '\0';
 		else
 			substr[i++] = s[start++];
