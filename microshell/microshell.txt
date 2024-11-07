@@ -1,0 +1,34 @@
+Exercice: Simulate a Shell with Pipe and Command Execution
+
+In this exercise, you are required to implement a program that simulates a simple shell
+(command-line interpreter) with support for basic command execution, the cd command,
+and piping between commands. All inputs must be received through argc, argv, and envp.
+
+The program should:
+
+Parse input commands separated by the ; and | delimiters.
+Change directories using the cd command and handle errors if an invalid path is provided.
+Execute each command using execve, passing the environment variables.
+Support piping to pass the output of one command as the input to the next.
+
+Requirements:
+
+The path for each command must be provided in the input arguments.
+
+If any system call fails (other than chdir or execve), the program should terminate immediately.
+
+Implement error handling for invalid cd usage and display an error if chdir fails.
+
+Handle fatal errors during process creation, piping, and redirection, returning appropriate messages.
+
+
+Example Input:
+./microshell cd /path/to/dir ";" /bin/ls -l "|" /bin/grep "filename" ";" /bin/echo "done"
+
+Expected Output:
+
+Change directory to /path/to/dir.
+
+List the contents in the directory, piping the output to grep to find "filename".
+
+Print "done" once all commands have been executed successfully.
