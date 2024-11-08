@@ -16,30 +16,40 @@ int	main(int argc, char **argv, char **envp)
 	int	i = 0;
 
 	(void)argc;
-	argv++;
+	argv++; // Ignora o primeiro argumento (nome do programa).
 	while (argv[i])
 	{
-//		printf("No loop da main com argv[%i] = %s\n", i, argv[i]);
-		if (strcmp(argv[i], "\0") != 0 && strcmp(argv[i], "|") != 0 && strcmp(argv[i], ";") != 0)
+		if (strcmp(argv[i], "\0") != 0 && strcmp(argv[i], "|") != 0 && strcmp(argv[i], ";") != 0) // Incrementa o índice até encontrar um separador
 			i++;
-		else if (strcmp(argv[i - 1], ";") == 0 && strcmp(argv[i], ";") == 0)
+		else if (strcmp(argv[i - 1], ";") == 0 && strcmp(argv[i], ";") == 0) // Ignora argumentos repetidos de ponto e vírgula.
 		{
 			argv++;
 			i = 0;
 		}
-		else if (i)
+		else if (i) // Encontrou um separador
 		{
-			execution(argv, i, envp);
-			argv += i + 1;
+			execution(argv, i, envp); // Executa o comando armazenado em argv.
+			argv += i + 1; // Avança para o próximo comando.
 			i = 0;
 		}
 		else
 			i++;
 	}
-	if (i)
-		execution(argv, i - 1, envp);
-//	printf("Saiu do loop da main com argv[%i] = %s\n", i, argv[i]);
+	if (i) // Encerrou o argv com algum comando ainda por rodar
+		execution(argv, i - 1, envp); // Executa o último comando se ainda houver algum.
 }
+
+/**
+ * execution - Executes a command with support for pipes and the "cd" command.
+ * @av: Array of command arguments.
+ * @i: Index of the command delimiter.
+ * @env: Environment variables array.
+ *
+ * This function checks the command to determine if it should be executed
+ * directly (such as "cd") or forked into a new process with pipe support.
+ * It handles setting up pipes, forking a child process, and executing the command
+ * using run_execve.
+ */
 
 void	execution(char **av, int i, char **env)
 {
@@ -47,58 +57,62 @@ void	execution(char **av, int i, char **env)
 	pid_t cpid;
 	int *wstatus = NULL;
 
-//	printf("Execução recebeu av[0] = %s\n", av[0]);
-//	printf("Execução recebeu av[%i] = %s\n", i, av[i]);
-	if (strcmp(av[i], "|") != 0 && strcmp(av[0], "cd") == 0)
+	if (strcmp(av[i], "|") != 0 && strcmp(av[0], "cd") == 0) // Verifica se o comando é 'cd' e o executa diretamente se não tiver pipes.
 	{
-		if (strcmp(av[i], ";") == 0)
-			do_cd(av, i - 1, 1);
-		else
-			do_cd(av, i, 2);
+		if (strcmp(av[i], ";") == 0) // O comando cd está seguido de um ";"
+			do_cd(av, i - 1, 1); // Vai executar cd, retirando o índice do separador (;) e passando a flag de que há um separador ao final
+		else // O comando cd não está seguido de um ";"
+			do_cd(av, i, 2); // Vai executar cd, passando a flag de que não há nenhum separador ao final
 		return ;
 	}
 	else if (av[i][0] == '|')
 	{
-		if (pipe(pipefd) < 0)
+		if (pipe(pipefd) < 0) // Faz o pipe. Se der erro, entra na condição e encerra o programa
 		{
 			print_error("error: fatal\n");
 			exit(1);
 		}
 	}
-//	printf("Vai forkar\n");
-	cpid = fork();
-	if (cpid < 0)
+	cpid = fork(); // Cria um processo filho para executar o comando.
+	if (cpid < 0) // Caso o fork dê erro
 	{
 		print_error("error: fatal\n");
 		exit(1);
 	}
-	if (cpid == 0)
+	if (cpid == 0) // No processo filho
 	{
-	//	printf("No processo filho, com av[0] = %s\n", av[0]);
-		set_pipe(av[i][0], pipefd, 1);
-	//	printf("A. Antes de run exec, com av[0] = %s e av[%i] = %s\n", av[0], i, av[i]);
+		set_pipe(av[i][0], pipefd, 1); // Configura o pipe para a saída. Ou seja, seta o fd_out do comando atual.
 		if (av[i][0] == '|' || av[i][0] == ';')
-			av[i] = NULL;
-	//	printf("B. Antes de run exec, com av[0] = %s e av[%i] = %s\n", av[0], i, av[i]);
-		run_execve(av, env);
+			av[i] = NULL; // Substitui o separador por um "final de matriz falso". Dessa forma, não é necessário criar uma nova matriz para execve
+		run_execve(av, env); // Executa o comando.
 	}
 	else if (cpid > 0)
-		waitpid(cpid, wstatus, 0);
-//	printf("voltou p o processo pai\n");
-	set_pipe(av[i][0], pipefd, 0);
+		waitpid(cpid, wstatus, 0); // Processo pai espera o filho terminar.
+	set_pipe(av[i][0], pipefd, 0); // Configura o pipe para a entrada do próximo comando. Ou seja, seta o fd_in já para o comando seguinte.
 	return ;
 }
 
+/**
+ * do_cd - Changes the current working directory.
+ * @av: Array of command arguments.
+ * @j: Index of the "cd" command.
+ * @flag: Flag indicating if the "cd" command is followed by ";"
+ *
+ * This function changes the current working directory to the specified
+ * path provided in av[1]. It checks if the command has valid arguments
+ * and displays an error if the directory change fails.
+ */
+
 void	do_cd(char **av, int j, int flag)
 {
-	if (j != 1 && flag == 1)
+	if (j != 1 && flag == 1) // Verifica se cd não tem exatamente um complemento e se tem um ";" depois desse comando
 	{
 		print_error("error: cd: bad arguments\n");
 		return ;
 	}
-	else if (j != 1 && flag == 2)
+	else if (j != 1 && flag == 2) // Verifica se cd não tem exatamente um complemento e se não há mais nada depois desse comando, no input
 		return ;
-	if (chdir(av[1]) == -1)
+	if (chdir(av[1]) == -1) // Tenta mudar para o diretório especificado.
 	{
             print_error("error: cd: bad arguments\n");
             print_error(av[1]);
@@ -106,12 +120,21 @@ void	do_cd(char **av, int j, int flag)
 	}
 }
 
+/**
+ * set_pipe - Configures the pipe for inter-process communication.
+ * @last: Character indicating the presence of a pipe ('|').
+ * @pipefd: File descriptors array for the pipe.
+ * @fd: File descriptor to redirect (0 for input, 1 for output).
+ *
+ * This function duplicates the pipe file descriptor to redirect input or
+ * output for the child process based on the command's requirements.
+ * It closes both ends of the pipe after duplication to avoid resource leaks.
+ */
+
 void	set_pipe(char last, int *pipefd, int fd)
 {
-//	printf("Vai setar o pipe se last = |\n");
-	if (last == '|')
+	if (last == '|') // Altera o FD apenas se o comando tiver um pipe no final
 	{
-//		printf("O ultimo é | \n");
 		if (dup2(pipefd[fd], fd) == -1)
 		{
 			print_error("error: fatal\n");
@@ -119,12 +142,19 @@ void	set_pipe(char last, int *pipefd, int fd)
 			close(pipefd[1]);
 			exit(1);
 		}
-//		write(2, "Passei do dup\n", 14);
-		close(pipefd[0]);
-		close(pipefd[1]);
+		close(pipefd[0]); // Fecha o pipe de entrada
+		close(pipefd[1]); // Fecha o pipe de saída
 	}
-//	printf("Saindo de set_pipe\n");
 }
+
+/**
+ * print_error - Prints an error message to standard error.
+ * @str: The error message to print.
+ *
+ * This function writes each character of the error message string to
+ * the standard error (stderr) file descriptor. It’s used to notify the
+ * user of fatal errors or failed command executions.
+ */
 
 void	print_error(char *str)
 {
@@ -132,15 +162,24 @@ void	print_error(char *str)
 
 	while (str[i])
 	{
-		write(2, &str, 1);
+		write(2, &str, 1); // Escreve cada caractere da string no stderr.
 		i++;
 	}
 }
 
+/**
+ * run_execve - Executes a command using execve.
+ * @av: Array of command arguments.
+ * @env: Environment variables array.
+ *
+ * This function replaces the current process image with a new process
+ * specified by av[0], using the environment variables from env. If execve fails,
+ * it displays an error message and returns control to the calling process.
+ */
+
 void	run_execve(char **av, char **env)
 {
-//	printf("Indo pro execve com av[0] = %s\n", av[0]);
-	if (execve(av[0], av, env) == -1)
+	if (execve(av[0], av, env) == -1) // Tenta executar o comando.
 	{
 			print_error("error: cannot execute \n");
 	        print_error(av[0]);
