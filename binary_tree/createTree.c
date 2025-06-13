@@ -1,8 +1,9 @@
+
 #include "BinaryTree.h"
 
 void	createTree(t_BT *tree)
 {
-	int *numbers = getNumbers();
+	int numbers[] = {41, 46, 60, 65, 11, 19, 39, 92, 22, 87}; //getNumbers();
 	int i = 1;
 
 //	printf("Ponteiro recebido em createTree: %p\n", tree);
@@ -19,7 +20,7 @@ void	createTree(t_BT *tree)
 		//printf("\n\n");
 		i++;
 	}
-	free(numbers);
+	//free(numbers);
 }
 
 int	*getNumbers()

@@ -1,3 +1,4 @@
+
 #include "BinaryTree.h"
 
 #define MAX_CHOICE 5
@@ -9,6 +10,8 @@ void	options(t_BT **tree)
 
 	while (choiceLimit > 0)
 	{
+		printf("\n" YELLOW "Current tree structure:\n" RESET);
+		printTree(*tree);
 		choice = chooseOption();
 		switch (choice)
 		{

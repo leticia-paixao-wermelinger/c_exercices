@@ -1,3 +1,4 @@
+
 #include "BinaryTree.h"
 
 void	clear_all(t_BT *tree)
