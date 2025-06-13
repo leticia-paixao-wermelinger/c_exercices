@@ -15,6 +15,7 @@ SRCS = \
 main.c \
 createTree.c \
 changeTree.c \
+searchTree.c \
 cleaning.c \
 options.c \
 removeNode.c

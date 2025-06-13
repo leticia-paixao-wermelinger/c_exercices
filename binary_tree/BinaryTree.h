@@ -54,6 +54,9 @@ void	clear_all(t_BT *tree);
 void	insertNumber(t_BT *tree);
 void	removeNumber(t_BT *tree);
 int		removeNode(t_BT *tree, t_BT *next, int flagSide, int number);
+void	searchPreOrder(t_BT *tree);
+void	searchInOrder(t_BT *tree);
+void	searchPostOrder(t_BT *tree);
 void	options(t_BT **tree);
 int		chooseOption();
 #endif

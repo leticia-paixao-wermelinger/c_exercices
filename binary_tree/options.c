@@ -10,8 +10,8 @@ void	options(t_BT **tree)
 
 	while (choiceLimit > 0)
 	{
-		printf("\n" YELLOW "Current tree structure:\n" RESET);
-		printTree(*tree);
+//		printf("\n" YELLOW "Current tree structure:\n" RESET);
+//		printTree(*tree);
 		choice = chooseOption();
 		switch (choice)
 		{
@@ -28,17 +28,17 @@ void	options(t_BT **tree)
 			case SEARCH_PRE:
 				choiceLimit = MAX_CHOICE;
 				printf("\n" BLUE "Search by pre-order.\n" RESET);
-//				searchPre(*data);
+				searchPreOrder(*tree);
 				break;
 			case SEARCH_ORDER:
 				choiceLimit = MAX_CHOICE;
 				printf("\n" BLUE "Search by order.\n" RESET);
-//				searchInOrder(*data);
+				searchInOrder(*tree);
 				break;
 			case SEARCH_POST:
 				choiceLimit = MAX_CHOICE;
 				printf("\n" BLUE "Search by post-order.\n" RESET);
-//				searchPost(*data);
+				searchPostOrder(*tree);
 				break;
 			case CLOSE:
 				printf("\n" BLUE "Exiting program.\n" RESET);

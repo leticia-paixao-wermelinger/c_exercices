@@ -1,14 +1,6 @@
 
 #include "BinaryTree.h"
 
-/*
-int	removeNode(t_BT *prev, t_BT *node, int flagSide, int number)
-{
-	// Se o nó tiver next_left e next_right, chamar outra função para continuara busca e não perder a referência do nó atual.
-}*/
-
-// Reescrever! Como atualiza o prev, acaba perdendo informação!
-
 int	removeNode(t_BT *prev, t_BT *node, int flagSide, int number)
 {
 	int	ret = FALSE;

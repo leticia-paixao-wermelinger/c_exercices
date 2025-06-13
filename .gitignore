@@ -1,0 +1,15 @@
+**/*.o
+**/*.out
+**/*.swp
+**/*.a
+.nfs*
+*.dSYM
+.DS_Store
+.history
+.vscode
+.DS_Store
+
+## Editor
+.vscode/*
+*~
+\#*\#
