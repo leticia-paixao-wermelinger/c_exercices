@@ -3,8 +3,8 @@
 
 void	createTree(t_BT *tree)
 {
-//	int numbers[] = {41, 46, 60, 65, 11, 19, 39, 92, 22, 87}; //getNumbers();
-	int *numbers = getNumbers();
+	int numbers[] = {53, 60, 87, 86, 21, 5, 53, 44, 68, 56};
+	//int *numbers = getNumbers();
 
 	int i = 1;
 
@@ -22,7 +22,7 @@ void	createTree(t_BT *tree)
 		//printf("\n\n");
 		i++;
 	}
-	free(numbers);
+	//free(numbers);
 }
 
 int	*getNumbers()
