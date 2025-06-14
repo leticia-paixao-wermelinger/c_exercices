@@ -17,10 +17,10 @@ void	insertNumber(t_BT *tree)
 
 int	insertNode(t_BT **tree, int number, int addedFlag)
 {
-	if ((*tree) == NULL) // If the current node is empty or NULL
+	if ((*tree) == NULL)
 	{
 		*tree = newClearNode(*tree);
-		(*tree)->number = number; // Set the number for the new node
+		(*tree)->number = number;
 		return TRUE;
 	}
 	else if ((number < (*tree)->number) && addedFlag == FALSE) // Insert in the left subtree
@@ -35,7 +35,7 @@ t_BT	*newClearNode(t_BT *node)
 	if (node == NULL)
 	{
 		node = calloc(1, sizeof(t_BT));
-		node->number = 0; // Initialize new node
+		node->number = 0;
 		node->next_left = NULL;
 		node->next_right = NULL;
 	}
@@ -51,11 +51,9 @@ void	removeNumber(t_BT *tree)
 	fgets(buffer, sizeof(buffer), stdin);
 	number = atoi(buffer);
 	
-	// VOLTAR AQUI DEPOIS!! Descobrir o que fazer se o número for o nó raiz:
-
-	if (tree->number == number) // DESCOBRIR O Q FAZER NESSE CASO
+	if (tree->number == number)
 	{
-		printf(RED "Cannot remove the root node directly. Please remove it from the tree.\n" RESET);
+		removeNodeDoubleParent(tree);
 		return;
 	}
 	else if (removeNode(tree, tree, UNKNOWN, number) == TRUE)

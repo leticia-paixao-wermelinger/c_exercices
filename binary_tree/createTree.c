@@ -3,12 +3,11 @@
 
 void	createTree(t_BT *tree)
 {
-	int numbers[] = {53, 60, 87, 86, 21, 5, 53, 44, 68, 56};
-	//int *numbers = getNumbers();
+	//int numbers[] = {53, 60, 87, 86, 21, 5, 53, 44, 68, 56};
+	int *numbers = getNumbers();
 
 	int i = 1;
 
-//	printf("Ponteiro recebido em createTree: %p\n", tree);
 	if (tree == NULL)
 	{
 		printf(RED "Error: tree is NULL\n" RESET);
@@ -17,12 +16,10 @@ void	createTree(t_BT *tree)
 	tree->number = numbers[0];
 	while (i < INITIAL_NODES)
 	{
-		//printf("\n\n");
 		insertNode(&tree, numbers[i],  FALSE);
-		//printf("\n\n");
 		i++;
 	}
-	//free(numbers);
+	free(numbers);
 }
 
 int	*getNumbers()
@@ -32,7 +29,7 @@ int	*getNumbers()
 
 	srand(time(NULL));
 	printf("Generating random numbers:\n");
-	for (i = 0; i < 10; i++)
+	for (i = 0; i < INITIAL_NODES; i++)
 	{
 		numbers[i] = rand() % 100;
 		printf("%d, ", numbers[i]);

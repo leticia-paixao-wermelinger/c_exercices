@@ -13,7 +13,7 @@
 # define BLUE "\033[34m"
 # define PINK "\033[35m"
 
-#define INITIAL_NODES 10
+#define INITIAL_NODES 40
 
 enum e_boolean
 {
@@ -54,6 +54,7 @@ void	clear_all(t_BT *tree);
 void	insertNumber(t_BT *tree);
 void	removeNumber(t_BT *tree);
 int		removeNode(t_BT *tree, t_BT *next, int flagSide, int number);
+void	removeNodeDoubleParent(t_BT *node);
 void	searchPreOrder(t_BT *tree);
 void	searchInOrder(t_BT *tree);
 void	searchPostOrder(t_BT *tree);

@@ -4,8 +4,6 @@
 int	removeNode(t_BT *prev, t_BT *node, int flagSide, int number)
 {
 	int	ret = FALSE;
-//	printf("Entrou em removeNode com número: %d e node (%p) de número %d\n", number, (void *)node, node->number);
-//	printf("Prev (%p) de número %d\n", (void *)prev, prev->number);
 
 	if (ret == FALSE)
 	{
@@ -17,17 +15,14 @@ int	removeNode(t_BT *prev, t_BT *node, int flagSide, int number)
 		}
 		else if (node->next_left && number != node->number) // Search in the left subtree
 		{
-//			printf("Searching in the left subtree for number: %d\n", number);
 			ret = removeNode(node, node->next_left, LEFT, number);
 		}
 		else if (node->next_right && number != node->number) // Search in the right subtree
 		{
-//			printf("Searching in the right subtree for number: %d\n", number);
 			ret = removeNode(node, node->next_right, RIGHT, number);
 		}
 		else if (number == node->number) // Node found
 		{
-//			printf("Found node with number: %d\n", node->number);
 			if (node->next_left == NULL && node->next_right == NULL) // Leaf node
 			{
 				printf("Removing leaf node: %d\n", node->number);
@@ -61,19 +56,39 @@ int	removeNode(t_BT *prev, t_BT *node, int flagSide, int number)
 				free(node);
 				ret = TRUE;
 			}
-			else // Node with two children // TA ERRADO! Descobrir como remover um nó com dois filhos
+			else // Node with two children
 			{
-				printf(RED "Cannot remove a node with two children.\n" RESET);
-				ret = FALSE;
+				removeNodeDoubleParent(node);
+				ret = TRUE;
 			}
 		}
 		else if (node->number != number)
-			ret = FALSE; // Node not found, but continue searching
+			ret = FALSE;
 		else
 		{
 			printf("Node with number %d is not removable.\n", node->number);
-			ret = FALSE; // Node not removable
+			ret = FALSE;
 		}
 	}
-	return ret; // Node not found or not removable
+	return ret;
+}
+
+void removeNodeDoubleParent(t_BT *node)
+{
+	t_BT	*temp = node->next_right;
+	t_BT	*prev = node;
+	
+	if (temp->next_left != NULL)
+	{
+		while (temp->next_left != NULL)
+		{
+		prev = temp;
+			temp = temp->next_left;
+		}
+		prev->next_left = temp->next_right;
+	}
+	else
+		prev->next_right = temp->next_right;
+	node->number = temp->number;
+	free(temp);
 }
