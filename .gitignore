@@ -8,6 +8,7 @@
 .history
 .vscode
 .DS_Store
+**/*.codex
 
 ## Editor
 .vscode/*
