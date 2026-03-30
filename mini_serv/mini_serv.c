@@ -69,43 +69,69 @@ int main(int argc, char *argv[]) {
 		write(2, "Invalid port\n", 13);
 		return (1);
 	}
-	// len = sizeof(port);
+	// fds para o socket do servidor e para a conexão com o cliente
+	int sockfd, connfd;
 
-	// int sockfd, connfd, len;
-	// struct sockaddr_in servaddr, cli; 
 
-	// // socket create and verification 
-	// sockfd = socket(AF_INET, SOCK_STREAM, 0); 
-	// if (sockfd == -1) { 
-	// 	printf("socket creation failed...\n"); 
-	// 	exit(0); 
-	// } 
-	// else
-	// 	printf("Socket successfully created..\n"); 
-	// bzero(&servaddr, sizeof(servaddr)); 
+	socklen_t len;
+	len = sizeof(port);
+	
+	// estruturas para o endereço do servidor e do cliente
+	struct sockaddr_in servaddr, cli; 
 
-	// // assign IP, PORT 
-	// servaddr.sin_family = AF_INET; 
-	// servaddr.sin_addr.s_addr = htonl(127001);
-	// servaddr.sin_port = htons(port); 
+	// socket create and verification 
+	// AF_INET: IPv4, SOCK_STREAM: TCP
+	// SOCK_STREAM: tipo de socket
+	// 0: protocolo padrão para o tipo de socket
+	sockfd = socket(AF_INET, SOCK_STREAM, 0); 
+	if (sockfd == -1) { 
+		write(2, "Fatal error\n", 12);
+		exit(1);
+	} 
+	else
+		write(1, "Socket successfully created..\n", 30);
+
+	// zera a estrutura do endereço do servidor
+	bzero(&servaddr, sizeof(servaddr)); 
+
+	// assign IP, PORT 
+	// AF_INET: IPv4
+	// htonl: converte um número inteiro para a ordem de bytes da rede
+	// htons: converte um short da ordem de bytes da máquina para a ordem de bytes da rede.
+	servaddr.sin_family = AF_INET; 
+	servaddr.sin_addr.s_addr = htonl(2130706433);
+	servaddr.sin_port = htons(port); 
   
-	// // Binding newly created socket to given IP and verification 
-	// if ((bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr))) != 0) { 
-	// 	printf("socket bind failed...\n"); 
-	// 	exit(0); 
-	// } 
-	// else
-	// 	printf("Socket successfully binded..\n");
-	// if (listen(sockfd, 10) != 0) {
-	// 	printf("cannot listen\n"); 
-	// 	exit(0); 
-	// }
-	// len = sizeof(cli);
-	// connfd = accept(sockfd, (struct sockaddr *)&cli, len);
-	// if (connfd < 0) { 
-    //     printf("server acccept failed...\n"); 
-    //     exit(0); 
-    // } 
-    // else
-    //     printf("server acccept the client...\n");
+	// Binding newly created socket to given IP and verification
+	// Chama bind() para ligar o socket criado (sockfd) ao endereço do servidor (servaddr).
+	// (const struct sockaddr *)&servaddr: endereço convertido para tipo genérico
+	if ((bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr))) != 0) { 
+		write(2, "socket bind failed...\n", 22);
+		exit(1);
+	} 
+	else
+		write(1, "Socket successfully binded...\n", 30);
+
+	// listen: coloca o socket em modo de escuta para aceitar conexões
+	// 10: número máximo de conexões pendentes na fila
+	if (listen(sockfd, 10) != 0) {
+		write(2, "cannot listen\n", 14);
+		exit(1);
+	}
+
+
+	len = sizeof(cli);
+
+	// accept: aceita uma conexão de um cliente
+	// (struct sockaddr *)&cli: estrutura para armazenar o endereço do cliente
+	connfd = accept(sockfd, (struct sockaddr *)&cli, &len);
+	if (connfd < 0) { 
+        write(2, "server acccept failed...\n", 25);
+        exit(1);
+    } 
+    else
+        write(1, "server acccept the client...\n", 31);
 }
+
+// Para compilar e rodar:
+// cc -Wall -Wextra -Werror -g mini_serv.c && valgrind --leak-check=full --show-leak-kinds=all --track-fds=yes ./a.out 4242
