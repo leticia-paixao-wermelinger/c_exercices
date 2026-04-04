@@ -55,14 +55,113 @@ char *str_join(char *buf, char *add)
 	return (newbuf);
 }
 
-void	main_loop(struct sockaddr_in *servaddr, int sockfd, socklen_t len)
+int addNewClient(int connfd, int *clients)
+{
+	// Adiciona o novo cliente ao array de clientes e ao conjunto de file descriptors monitorados
+	for (int i = 0; i < 1024; i++)
+	{
+		// Se o número máximo de clientes for atingido, fecha a conexão e exibe uma mensagem de erro
+		if (i == 1024)
+		{
+			write(2, "Too many clients\n", 17);
+			close(connfd);
+		}
+
+		// Se encontrar um slot disponível no array de clientes, adiciona o novo cliente e retorna
+		if (clients[i] == -1)
+		{
+			clients[i] = connfd;
+			return 0;
+		}
+	}
+	return (0);
+}
+
+int	identifyNewClient(fd_set *readfds, fd_set *allfds, int sockfd, int *clients, int *maxfd)
+{
+	// Detectar um  novo cliente:
+	if (FD_ISSET(sockfd, readfds))
+	{
+		struct sockaddr_in cli;
+		socklen_t len;
+		int connfd;
+		len = sizeof(cli);
+
+		// Chama accept() para aceitar a nova conexão do cliente
+		connfd = accept(sockfd, (struct sockaddr *)&cli, &len);
+		if (connfd >= 0)
+		{
+			if (addNewClient(connfd, clients) == -1)
+				return (-1);
+
+			// Adiciona o novo cliente ao conjunto de file descriptors monitorados
+			FD_SET(connfd, allfds);
+			if (connfd > *maxfd)
+				*maxfd = connfd;
+		}
+	}
+	return (0);
+}
+
+int checkPendingMessages(fd_set *readfds, int *clients, fd_set *allfds)
+{
+	// Verifica se há mensagens de clientes existentes
+	for (int i = 0; i < 1024; i++)
+	{
+		int fd = clients[i];
+		if (fd == -1)
+			continue;
+
+		// Se o cliente tiver enviado uma mensagem, processa a mensagem
+		if (FD_ISSET(fd, readfds))
+		{
+			char buffer[1024];
+			int n = recv(fd, buffer, sizeof(buffer) - 1, 0);
+
+			// Se recv() retornar 0 ou um valor negativo, significa que o cliente se desconectou ou ocorreu um erro
+			if (n <= 0)
+			{
+				close(fd);
+				FD_CLR(fd, allfds);
+				clients[i] = -1;
+			}
+
+			// Caso contrário, processa a mensagem recebida (n > 0)
+			buffer[n] = '\0';
+			write(1, buffer, n);
+
+			// Envia a mensagem para todos os outros clientes conectados
+			for (int j = 0; j < 1024; j++)
+			{
+				if (clients[j] != -1 && clients[j] != fd)
+					send(clients[j], buffer, n, 0);
+			}
+		}
+	}
+	return (0);
+}
+
+void clearAllFds(fd_set *allfds, int *clients)
+{
+	for (int i = 0; i < 1024; i++)
+	{
+		if (clients[i] != -1)
+		{
+			close(clients[i]);
+			FD_CLR(clients[i], allfds);
+			clients[i] = -1;
+		}
+	}
+}
+
+void	main_loop(int sockfd)
 {
 	// Array para armazenar os file descriptors dos clientes conectados
-	int client_fds[1024];
+	int clients[1024];
 
 	// Inicializa o array de file descriptors dos clientes com -1 (indicando que estão disponíveis)
 	for (int i = 0; i < 1024; i++)
-		client_fds[i] = -1;
+		clients[i] = -1;
 
 	// readfds = cópia temporária passada ao select()
 	// allfds = conjunto mestre com todos os sockets monitorados
@@ -88,16 +187,14 @@ void	main_loop(struct sockaddr_in *servaddr, int sockfd, socklen_t len)
 			exit(1);
 		}
 
-		// Detectar um  novo cliente:
-		if (FD_ISSET(sockfd, &readfds))
-		{
-			connfd = accept(sockfd, (struct sockaddr *)&cli, &len);
-			if (connfd >= 0)
-			{
-				...
-			}
-		}
+		if (identifyNewClient(&readfds, &allfds, sockfd, clients, &maxfd) == -1)
+			break;
+		
+		if (checkPendingMessages(&readfds, clients, &allfds) == -1)
+			break;
 	}
+
+	clearAllFds(&allfds, clients);
 }
 
 int main(int argc, char *argv[]) {
@@ -114,12 +211,12 @@ int main(int argc, char *argv[]) {
 		write(2, "Invalid port\n", 13);
 		return (1);
 	}
-	// fds para o socket do servidor e para a conexão com o cliente
-	int sockfd, connfd;
+	// fds para o socket do servidor
+	int sockfd;
 
 	
-	// estruturas para o endereço do servidor e do cliente
-	struct sockaddr_in servaddr, cli; 
+	// estruturas para o endereço do servidor
+	struct sockaddr_in servaddr; 
 	
 	// socket create and verification 
 	// AF_INET: IPv4, SOCK_STREAM: TCP
@@ -153,16 +250,14 @@ int main(int argc, char *argv[]) {
 	} 
 	else
 		write(1, "Socket successfully binded...\n", 30);
+
+	// listen: coloca o socket em modo de escuta para aceitar conexões
+	// 10: número máximo de conexões pendentes na fila
+	if (listen(sockfd, 10) != 0) {
+		write(2, "cannot listen\n", 14);
+		exit(1);
+	}
 		
-		// listen: coloca o socket em modo de escuta para aceitar conexões
-		// 10: número máximo de conexões pendentes na fila
-		if (listen(sockfd, 10) != 0) {
-			write(2, "cannot listen\n", 14);
-			exit(1);
-		}
-		
-	socklen_t len;
-	len = sizeof(cli);
 	// // accept: aceita uma conexão de um cliente
 	// // (struct sockaddr *)&cli: estrutura para armazenar o endereço do cliente
 	// connfd = accept(sockfd, (struct sockaddr *)&cli, &len);
@@ -173,7 +268,7 @@ int main(int argc, char *argv[]) {
     // else
     //     write(1, "server acccept the client...\n", 29);
 
-	main_loop(&servaddr, sockfd, len);
+	main_loop(sockfd);
 }
 
 // Para compilar e rodar:
