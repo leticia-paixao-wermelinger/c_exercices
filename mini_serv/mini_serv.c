@@ -74,9 +74,12 @@ void	fatalError(void)
 void broadcastMsg(int *clients, char *msg, enum msgType type, int sender_fd)
 {
 	char	*full_msg;
-	char 	tmp[128];
+	char	tmp[128];
+	char	*buffer_copy;
+	char	*line;
+	int		status;
 	int		j;
-	int		sender_id = sender_fd - 3;
+	int		sender_id = sender_fd - 4;
 	
 	full_msg = 0;
 	if (type == LEFT)
@@ -95,14 +98,23 @@ void broadcastMsg(int *clients, char *msg, enum msgType type, int sender_fd)
 	}
 	else if (type == MESSAGE)
 	{
-		char	tmp[128];
-		sprintf(tmp, "client %d: ", sender_id);
-		full_msg = str_join(full_msg, tmp);
-		if (full_msg == 0)
+		buffer_copy = str_join(0, msg);
+		if (buffer_copy == 0)
 			fatalError();
-		full_msg = str_join(full_msg, msg);
-		if (full_msg == 0)
+		while ((status = extract_message(&buffer_copy, &line)) > 0)
+		{
+			sprintf(tmp, "client %d: ", sender_id);
+			full_msg = str_join(full_msg, tmp);
+			if (full_msg == 0)
+				fatalError();
+			full_msg = str_join(full_msg, line);
+			free(line);
+			if (full_msg == 0)
+				fatalError();
+		}
+		if (status == -1)
 			fatalError();
+		free(buffer_copy);
 	}
 	if (full_msg == 0)
 		return ;
