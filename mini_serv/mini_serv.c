@@ -18,6 +18,8 @@ enum msgType
 	MESSAGE
 };
 
+void removeClient(int fd, int *clients, fd_set *allfds);
+
 int extract_message(char **buf, char **msg)
 {
 	char	*newbuf;
@@ -190,9 +192,7 @@ int checkPendingMessages(fd_set *readfds, int *clients, fd_set *allfds)
 			// Se recv() retornar 0 ou um valor negativo, significa que o cliente se desconectou ou ocorreu um erro
 			if (n <= 0)
 			{
-				close(fd);
-				FD_CLR(fd, allfds);
-				clients[i] = -1;
+				removeClient(fd, clients, allfds);
 				continue;
 			}
 
@@ -204,16 +204,28 @@ int checkPendingMessages(fd_set *readfds, int *clients, fd_set *allfds)
 	return (0);
 }
 
+void removeClient(int fd, int *clients, fd_set *allfds)
+{
+	// Remove o cliente do array de clientes e do conjunto de file descriptors monitorados
+	for (int i = 0; i < 1024; i++)
+	{
+		if (clients[i] == fd)
+		{
+			close(clients[i]);
+			FD_CLR(clients[i], allfds);
+			clients[i] = -1;
+			broadcastMsg(clients, NULL, LEFT, fd);
+			return ;
+		}
+	}
+}
+
 void clearAllFds(fd_set *allfds, int *clients, int sockfd)
 {
 	for (int i = 0; i < 1024; i++)
 	{
 		if (clients[i] != -1)
-		{
-			close(clients[i]);
-			FD_CLR(clients[i], allfds);
-			clients[i] = -1;
-		}
+			removeClient(clients[i], clients, allfds);
 	}
 	close(sockfd);
 }
