@@ -7,6 +7,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/select.h>
+#include <signal.h>
+
+static volatile sig_atomic_t	g_should_stop = 0;
+
+enum msgType
+{
+	LEFT,
+	ARRIVED,
+	MESSAGE
+};
 
 int extract_message(char **buf, char **msg)
 {
@@ -55,25 +65,72 @@ char *str_join(char *buf, char *add)
 	return (newbuf);
 }
 
+void	fatalError(void)
+{
+	write(2, "Fatal error\n", 12);
+	exit(1);
+}
+
+void broadcastMsg(int *clients, char *msg, enum msgType type, int sender_fd)
+{
+	char	*full_msg;
+	char 	tmp[128];
+	int		j;
+	int		sender_id = sender_fd - 3;
+	
+	full_msg = 0;
+	if (type == LEFT)
+	{
+		sprintf(tmp, "server: client %d just left\n", sender_id);
+		full_msg = str_join(full_msg, tmp);
+		if (full_msg == 0)
+			fatalError();
+	}
+	else if (type == ARRIVED)
+	{
+		sprintf(tmp, "server: client %d just arrived\n", sender_id);
+		full_msg = str_join(full_msg, tmp);
+		if (full_msg == 0)
+			fatalError();
+	}
+	else if (type == MESSAGE)
+	{
+		char	tmp[128];
+		sprintf(tmp, "client %d: ", sender_id);
+		full_msg = str_join(full_msg, tmp);
+		if (full_msg == 0)
+			fatalError();
+		full_msg = str_join(full_msg, msg);
+		if (full_msg == 0)
+			fatalError();
+	}
+	if (full_msg == 0)
+		return ;
+	j = 0;
+	while (j < 1024)
+	{
+		if (clients[j] != -1 && clients[j] != sender_fd && clients[j] != -1)
+			send(clients[j], full_msg, strlen(full_msg), 0);
+		j++;
+	}
+	free(full_msg);
+}
+
 int addNewClient(int connfd, int *clients)
 {
 	// Adiciona o novo cliente ao array de clientes e ao conjunto de file descriptors monitorados
 	for (int i = 0; i < 1024; i++)
 	{
-		// Se o número máximo de clientes for atingido, fecha a conexão e exibe uma mensagem de erro
-		if (i == 1024)
-		{
-			write(2, "Too many clients\n", 17);
-			close(connfd);
-		}
-
 		// Se encontrar um slot disponível no array de clientes, adiciona o novo cliente e retorna
 		if (clients[i] == -1)
 		{
 			clients[i] = connfd;
+			broadcastMsg(clients, NULL, ARRIVED, connfd);
 			return 0;
 		}
 	}
+	write(2, "Too many clients\n", 17);
+	close(connfd);
 	return (0);
 }
 
@@ -124,24 +181,18 @@ int checkPendingMessages(fd_set *readfds, int *clients, fd_set *allfds)
 				close(fd);
 				FD_CLR(fd, allfds);
 				clients[i] = -1;
+				continue;
 			}
 
 			// Caso contrário, processa a mensagem recebida (n > 0)
-			buffer[n] = '\0';
-			write(1, buffer, n);
-
-			// Envia a mensagem para todos os outros clientes conectados
-			for (int j = 0; j < 1024; j++)
-			{
-				if (clients[j] != -1 && clients[j] != fd)
-					send(clients[j], buffer, n, 0);
-			}
+			buffer[n] = '\0'; // Adiciona um terminador de string ao final da mensagem
+			broadcastMsg(clients, buffer, MESSAGE, fd);
 		}
 	}
 	return (0);
 }
 
-void clearAllFds(fd_set *allfds, int *clients)
+void clearAllFds(fd_set *allfds, int *clients, int sockfd)
 {
 	for (int i = 0; i < 1024; i++)
 	{
@@ -152,6 +203,7 @@ void clearAllFds(fd_set *allfds, int *clients)
 			clients[i] = -1;
 		}
 	}
+	close(sockfd);
 }
 
 void	main_loop(int sockfd)
@@ -176,15 +228,17 @@ void	main_loop(int sockfd)
 	maxfd = sockfd;
 
 	// Loop principal do servidor
-	while (42)
+	while (g_should_stop == 0)
 	{
 		readfds = allfds;
 
 		// Chama select() para esperar por atividade em qualquer um dos sockets monitorados
 		if (select(maxfd + 1, &readfds, NULL, NULL, NULL) < 0)
 		{
+			if (errno == EINTR)
+				break ;
 			write(2, "select error\n", 13);
-			exit(1);
+			break ;
 		}
 
 		if (identifyNewClient(&readfds, &allfds, sockfd, clients, &maxfd) == -1)
@@ -194,7 +248,13 @@ void	main_loop(int sockfd)
 			break;
 	}
 
-	clearAllFds(&allfds, clients);
+	clearAllFds(&allfds, clients, sockfd);
+}
+
+void	signalHandler(int sig)
+{
+	(void)sig;
+	g_should_stop = 1;
 }
 
 int main(int argc, char *argv[]) {
@@ -214,6 +274,11 @@ int main(int argc, char *argv[]) {
 	// fds para o socket do servidor
 	int sockfd;
 
+	if (signal(SIGINT, signalHandler) == SIG_ERR)
+	{
+		write(2, "signal failed\n", 14);
+		return (1);
+	}
 	
 	// estruturas para o endereço do servidor
 	struct sockaddr_in servaddr; 
