@@ -121,7 +121,7 @@ void broadcastMsg(int *clients, char *msg, enum msgType type, int sender_fd)
 	if (full_msg == 0)
 		return ;
 	j = 0;
-	while (j < 1024)
+	while (j < FD_SETSIZE)
 	{
 		if (clients[j] != -1 && clients[j] != sender_fd && clients[j] != -1)
 			send(clients[j], full_msg, strlen(full_msg), 0);
@@ -133,7 +133,7 @@ void broadcastMsg(int *clients, char *msg, enum msgType type, int sender_fd)
 int addNewClient(int connfd, int *clients)
 {
 	// Adiciona o novo cliente ao array de clientes e ao conjunto de file descriptors monitorados
-	for (int i = 0; i < 1024; i++)
+	for (int i = 0; i < FD_SETSIZE; i++)
 	{
 		// Se encontrar um slot disponível no array de clientes, adiciona o novo cliente e retorna
 		if (clients[i] == -1)
@@ -177,7 +177,7 @@ int	identifyNewClient(fd_set *readfds, fd_set *allfds, int sockfd, int *clients,
 int checkPendingMessages(fd_set *readfds, int *clients, fd_set *allfds)
 {
 	// Verifica se há mensagens de clientes existentes
-	for (int i = 0; i < 1024; i++)
+	for (int i = 0; i < FD_SETSIZE; i++)
 	{
 		int fd = clients[i];
 		if (fd == -1)
@@ -186,7 +186,7 @@ int checkPendingMessages(fd_set *readfds, int *clients, fd_set *allfds)
 		// Se o cliente tiver enviado uma mensagem, processa a mensagem
 		if (FD_ISSET(fd, readfds))
 		{
-			char buffer[1024];
+			char buffer[FD_SETSIZE];
 			int n = recv(fd, buffer, sizeof(buffer) - 1, 0);
 
 			// Se recv() retornar 0 ou um valor negativo, significa que o cliente se desconectou ou ocorreu um erro
@@ -207,7 +207,7 @@ int checkPendingMessages(fd_set *readfds, int *clients, fd_set *allfds)
 void removeClient(int fd, int *clients, fd_set *allfds)
 {
 	// Remove o cliente do array de clientes e do conjunto de file descriptors monitorados
-	for (int i = 0; i < 1024; i++)
+	for (int i = 0; i < FD_SETSIZE; i++)
 	{
 		if (clients[i] == fd)
 		{
@@ -222,7 +222,7 @@ void removeClient(int fd, int *clients, fd_set *allfds)
 
 void clearAllFds(fd_set *allfds, int *clients, int sockfd)
 {
-	for (int i = 0; i < 1024; i++)
+	for (int i = 0; i < FD_SETSIZE; i++)
 	{
 		if (clients[i] != -1)
 			removeClient(clients[i], clients, allfds);
