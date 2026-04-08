@@ -233,10 +233,10 @@ void clearAllFds(fd_set *allfds, int *clients, int sockfd)
 void	main_loop(int sockfd)
 {
 	// Array para armazenar os file descriptors dos clientes conectados
-	int clients[1024];
+	int clients[FD_SETSIZE];
 
 	// Inicializa o array de file descriptors dos clientes com -1 (indicando que estão disponíveis)
-	for (int i = 0; i < 1024; i++)
+	for (int i = 0; i < FD_SETSIZE; i++)
 		clients[i] = -1;
 
 	// readfds = cópia temporária passada ao select()
