@@ -84,49 +84,51 @@ void	fatalError()
 	exit(1);
 }
 
-void	broadcastMsg(t_msgType msgType, char *recvMsg, t_client client)
+void	broadcastMsg(t_msgType msgType, char *recvMsg, t_client *client)
 {
 	char tmp[max_buffer];
 	char *finalMsg = NULL;
 
-	printf("Chegou na broadcastMsg ");
+	//printf("Chegou na broadcastMsg ");
 	if (msgType == ARRIVE)
 	{
-		printf("com msgType = ARRIVE.");
-		sprintf(tmp, "server: client %d just arrived\n", client.id);
+		//printf("com msgType = ARRIVE.");
+		sprintf(tmp, "server: client %d just arrived\n", client->id);
 		finalMsg = str_join(finalMsg, tmp);
 	}
 	else if (msgType == LEAVE)
 	{
-		printf("com msgType = LEAVE.");
-		sprintf(tmp, "server: client %d just left\n", client.id);
+		//printf("com msgType = LEAVE.");
+		sprintf(tmp, "server: client %d just left\n", client->id);
 		finalMsg = str_join(finalMsg, tmp);
 	}
 	else if (msgType == MSG)
 	{
-		printf("com msgType = MSG e com msg = |%s|", recvMsg);
+		//printf("com msgType = MSG e com msg = |%s|", recvMsg);
 		char *partialMsg = NULL;
-		if (client.buffer)
-			finalMsg = str_join(NULL, client.buffer);
-		free(client.buffer);
-		client.buffer = NULL;
-		while (extract_message(&recvMsg, &partialMsg))
+		// MODIFICADO: guardamos a sobra no cliente real, nao em uma copia local.
+		client->buffer = str_join(client->buffer, recvMsg);
+		if (client->buffer == NULL)
+			fatalError();
+		while (extract_message(&client->buffer, &partialMsg))
 		{
-			sprintf(tmp, "client %d: %s", client.id, partialMsg);
+			sprintf(tmp, "client %d: %s", client->id, partialMsg);
 			finalMsg = str_join(finalMsg, tmp);
+			free(partialMsg);
+			partialMsg = NULL;
 		}
-		if (strlen(recvMsg) != 0)
-			strcpy(client.buffer, recvMsg);
 	}
 
 	for (int i = 0; i < FD_SETSIZE; i++)
 	{
 		if (clients[i].id == -1)
 			continue ;
-		else if (clients[i].id == client.id)
+		else if (clients[i].id == client->id)
 			continue ;
-		send(clients[i].fd, finalMsg, strlen(finalMsg), 0);
+		if (finalMsg != NULL)
+			send(clients[i].fd, finalMsg, strlen(finalMsg), 0);
 	}
+	free(finalMsg);
 }
 
 void remove_client(t_client client)
@@ -135,7 +137,7 @@ void remove_client(t_client client)
 	{
 		if (clients[i].id == client.id)
 		{
-			broadcastMsg(LEAVE, NULL, client);
+			broadcastMsg(LEAVE, NULL, &client);
 			FD_CLR(clients[i].fd, &all_clients);
 			clients[i].fd = -1;
 			clients[i].id = -1;
@@ -151,17 +153,17 @@ int	checkNewMsg()
 	{
 		if (FD_ISSET(clients[i].fd, &selected_clients))
 		{
-			printf("No loop da checkNewMsg. fd do client = %i\n", clients[i].fd);
+			//printf("No loop da checkNewMsg. fd do client = %i\n", clients[i].fd);
 			char buffer[max_buffer];
 			int bufferSize = recv(clients[i].fd, buffer, max_buffer - 1, 0);
 			if (bufferSize <= 0)
 			{
 				remove_client(clients[i]);
 				return 0;
+				}
+				buffer[bufferSize] = '\0';
+				broadcastMsg(MSG, buffer, &clients[i]);
 			}
-			buffer[bufferSize] = '\0';
-			broadcastMsg(MSG, buffer, clients[i]);
-		}
 	}
 	return 0;
 }
@@ -173,14 +175,14 @@ void	addNewClient(int connfd)
 	{
 		if (clients[i].fd == -1)
 		{
-			printf("vai add cliente no indice %i\n", i);
+			//printf("vai add cliente no indice %i\n", i);
 			last_id++;
 			clients[i].fd = connfd;
 			clients[i].id = last_id;
 			clients[i].buffer = NULL;
 			if (max_fd < connfd)
 				max_fd = connfd;
-			broadcastMsg(ARRIVE, NULL, clients[i]);
+			broadcastMsg(ARRIVE, NULL, &clients[i]);
 			FD_SET(connfd, &all_clients);
 			return ;
 		}
@@ -197,7 +199,7 @@ int checkNewClient()
 		
 		len = sizeof(cli);
 		connfd = accept(sockfd, (struct sockaddr *)&cli, &len);
-		printf("Na checkNewClient. fd do client = %i\n", connfd);
+		//printf("Na checkNewClient. fd do client = %i\n", connfd);
 		if (connfd < 0)
 			fatalError();
 		addNewClient(connfd);
